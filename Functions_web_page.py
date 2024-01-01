@@ -25,10 +25,7 @@ from selenium.webdriver.chrome.options import Options
 import re
 import pandas as pd
 import openpyxl
-
-
-
-
+import traceback
 
 
 
@@ -42,8 +39,18 @@ def read_tender_starting_date(driver, x_path_card_web_element):
     starting_date_tender = starting_date_tender.text
     #keeping only dd-mm-aa
     starting_date_tender = starting_date_tender[0:10]
-    starting_date_tender = datetime.strptime(starting_date_tender,  "%d-%m-%Y")
+    starting_date_tender = datetime.strptime(starting_date_tender,  "%d-%m-%Y").date()
     return starting_date_tender
+
+def read_tender_end_date(driver, x_path_card_web_element):
+    x_path_end_date = x_path_card_web_element + "/div[3]/div/div[3]/div[2]/span"
+    end_date_tender = driver.find_elements(By.XPATH, x_path_end_date)[0]
+    #reading emission date as a text
+    end_date_tender = end_date_tender.text
+    #keeping only dd-mm-aa
+    end_date_tender = end_date_tender[0:10]
+    end_date_tender = datetime.strptime(end_date_tender,  "%d-%m-%Y").date()
+    return end_date_tender
 
 def read_last_page_number(driver):
     if driver.find_elements(By.XPATH, "/html/body/section[3]/div/div/div/div[13]/a[7]")[0].text == "Next":
@@ -293,13 +300,13 @@ def create_excel_file(root):
         print(f"Excel file {file_name} already exists. No action taken.")
         df = pd.read_excel(root + download_folder_name +  file_name, sheet_name='Sheet1', header=0)
         print("excel columns", df.columns)
-        if list(df.columns) != ["Download date", "Ministry", "Organisation", "Bid's ID", "Item name","Downloaded", "Key word that filtered item"]:
-            raise ValueError(f"Existing file {root + download_folder_name +  file_name} does not match template of columns:Download date, Ministry, Organisation, Bid's ID, Item name, Downloaded , Key word that filtered item")
+        if list(df.columns) != ["Download date", "Ministry", "Organisation", "Bid's ID", "Item name","Downloaded", "Key word that filtered item", "Starting date", "End date"]:
+            raise ValueError(f"Existing file {root + download_folder_name +  file_name} does not match template of columns:Download date, Ministry, Organisation, Bid's ID, Item name, Downloaded , Key word that filtered item","Starting date", "End date")
     # Create a new Excel workbook
     else:
         print("creating excel file")
         # Write to the specified cells
-        values = ["Download date", "Ministry", "Organisation", "Bid's ID", "Item name", "Downloaded", "Key word that filtered item"]
+        values = ["Download date", "Ministry", "Organisation", "Bid's ID", "Item name", "Downloaded", "Key word that filtered item", "Starting_date", "End date"]
         df = pd.DataFrame(columns=values)
         # Save the Excel file
         with pd.ExcelWriter(root + download_folder_name + file_name, engine='openpyxl') as writer:
@@ -476,7 +483,7 @@ def downloads_pdf(driver, page_type, page_info, oldest_date = "01-01-2000", firs
     ##creating folder to stock downloads 
     create_folder(root)
     downloads_register, download_register_path = create_excel_file(root)
-    intermediate_downloads_register = pd.DataFrame(columns = ["Download date", "Ministry", "Organisation", "Bid's ID", "Item name", "Downloaded", "Key word that filtered item"])
+    intermediate_downloads_register = pd.DataFrame(columns = ["Download date", "Ministry", "Organisation", "Bid's ID", "Item name", "Downloaded", "Key word that filtered item", "Starting date", "End date"])
     if first_page > last_page:
         raise ValueError(f"First page input {first_page} shall not be superior to last page input {last_page}")
     # Initialisation of variable for files transfer
@@ -511,7 +518,8 @@ def downloads_pdf(driver, page_type, page_info, oldest_date = "01-01-2000", firs
                 for n_tender in range (2,2 + n_tenders):
                     x_path_tender = f"/html/body/section[3]/div/div/div/div[{n_tender}]"
                     starting_date_tender = read_tender_starting_date(driver, x_path_tender)
-                    oldest_date_tender = datetime.strptime(oldest_date,  "%d-%m-%Y")
+                    end_date_tender = read_tender_end_date(driver, x_path_tender)
+                    oldest_date_tender = datetime.strptime(oldest_date,  "%d-%m-%Y").date()
                     if starting_date_tender >= oldest_date_tender:
                         #filter item_name: read item_name 
                         item_name= read_item_name(driver, x_path_tender)
@@ -520,8 +528,8 @@ def downloads_pdf(driver, page_type, page_info, oldest_date = "01-01-2000", firs
                         #get name of the file that is downloaded when we click on the bid - NOT THE SAME AS GEM BID NAME. ONLY 7 number ID
                         file_name = driver.find_elements(By.XPATH, f"/html/body/section[3]/div/div/div/div[{n_tender}]/div[1]/p[1]/a")[0].get_attribute("href")[-7:]
                         boolean, key_word = filter_name(item_name, key_word_list, authorized_approx)
-                        #dictionnary: key name of file, value: [bid_name, hyperlink, item_name, key_word]
-                        file = {file_name: [name_bid, driver.find_elements(By.XPATH, f"/html/body/section[3]/div/div/div/div[{n_tender}]/div[1]/p[1]/a")[0], item_name, key_word]}
+                        #dictionnary: key name of file, value: [bid_name, hyperlink, item_name, key_word, starting_date, end_date]
+                        file = {file_name: [name_bid, driver.find_elements(By.XPATH, f"/html/body/section[3]/div/div/div/div[{n_tender}]/div[1]/p[1]/a")[0], item_name, key_word, starting_date_tender, end_date_tender]}
                         if boolean: 
                             print("item_name", item_name)
                             #GeM portal is having an issue : Sometimes, some tenders are put twice in the list on different pages
@@ -530,13 +538,13 @@ def downloads_pdf(driver, page_type, page_info, oldest_date = "01-01-2000", firs
                             if name_bid not in downloaded_bids: 
                                 page_hyplist.append(file)
                                 downloaded_bids.append(name_bid)
-                                new_row = [curent_time, page_info[0], page_info[1], file[file_name][0], file[file_name][2], "Yes", file[file_name][3]]
+                                new_row = [curent_time, page_info[0], page_info[1], file[file_name][0], file[file_name][2], "Yes", file[file_name][3], file[file_name][4], file[file_name][5]]
                                 intermediate_downloads_register.loc[len(intermediate_downloads_register)] = new_row
                             else:
                                 print(f"Bid {name_bid} already downloaded")
                         else:
                             #write in csv screened names that we did not download 
-                            new_row = [curent_time, page_info[0], page_info[1], file[file_name][0], file[file_name][2], "No", file[file_name][3]]
+                            new_row = [curent_time, page_info[0], page_info[1], file[file_name][0], file[file_name][2], "No", file[file_name][3], file[file_name][4], file[file_name][5]]
                             intermediate_downloads_register.loc[len(intermediate_downloads_register)] = new_row
 
                 print("DOWNLOADING")
@@ -603,7 +611,8 @@ def downloads_pdf(driver, page_type, page_info, oldest_date = "01-01-2000", firs
                     next_button.click()
     except Exception as e:
         print(f"An error {type(e).__name__} occured for client {page_info}")
-        new_row = [curent_time, page_info[0], page_info[1], f"Error {type(e).__name__} occured", None, None, None]
+        traceback.print_exc()
+        new_row = [curent_time, page_info[0], page_info[1], f"Error {type(e).__name__} occured", None, None, None, None, None]
         intermediate_downloads_register.loc[len(intermediate_downloads_register)] = new_row
 
 

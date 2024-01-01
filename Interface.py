@@ -1,88 +1,84 @@
 import PySimpleGUI as sg
-from Functions_web_page import get_driver, charging_web_page, downloads_pdf
-from Functions_interface import parse_key_word_input
+from Functions_clients_database import read_clients_name
+from Functions_web_page import download_multiple_pdf, get_driver
+from Functions_interface import set_departments_window, set_ministry_window, run_ministry_window, set_display_selection_window, run_display_selection_window, run_search_result_window, set_search_result_window
 sg.theme('LightGrey1')  # Theme selection
+from datetime import datetime
+from Tenders_database_analysis_functions import generate_download_gem_path_from_date
+# Votre dictionnaire de clients
+clients_database = read_clients_name(r"C:\Waves Electronics 2023-2024 - programming\Quotations\Srapping tenders\New app\clients_database")
 
 
-
-# Dropdown options for the Ministry selection
-ministry_options = ['Ministry of Defence', 'Ministry of Coal']
-access_web_page_layout = [
-    [sg.Text('Access Web Page', size=(20, 1), font=('Helvetica', 20), justification='center')],
-    [sg.Text('Ministry:', size=(10, 1)), sg.Combo(ministry_options, default_value='Ministry of Defence', key='ministry')],
-    [sg.Text('Organisation:', size=(10, 1)), sg.InputText(default_text='GOA SHIPYARD LIMITED', key='organization')],
-    [sg.Text('Access Web Page', size=(20, 1), font=('Helvetica', 20), justification='center')],
-    [sg.Text('Ministry:', size=(10, 1)), sg.InputText(default_text='MINISTRY OF DEFENCE', key='ministry')],
-    [sg.Text('Organisation:', size=(10, 1)), sg.InputText(default_text='GOA SHIPYARD LIMITED', key='organization')],
-    [sg.Button('Access', size=(10, 2), font=('Helvetica', 15)), 
-     sg.Button('Close', size=(10, 2), font=('Helvetica', 15)), 
-     sg.Text('', size=(30, 1), key='status')],
-]
-
-download_tenders_layout = [
-    [sg.Text('Download Tenders', size=(20, 1), font=('Helvetica', 20), justification='center')],
-    [sg.Text('Arthur', size=(20, 1))],  # Explanation text - to be filled later
-    [sg.Text('First Page:', size=(10, 1)), sg.InputText(key='first_page')],
-    [sg.Text('Last Page:', size=(10, 1)), sg.InputText(key='last_page')],
-    [sg.Text('Oldest Date:', size=(10, 1)), sg.InputText(key='oldest_date')],
-    [sg.Text('Key words', size=(10, 1)), sg.InputText(key='key_word_list')],
-    [sg.Button('Download', size=(10, 2), font=('Helvetica', 15))],
-
-]
+# Titre et sous-titres pour les sections
+title_font = ('Helvetica', 24, 'bold')
+subtitle_font = ('Helvetica', 18, 'underline')
+background_color = '#f0f0f0'  # Couleur d'arrière-plan gris clair
+text_color = '#333333'  # Couleur de texte gris foncé
 
 layout = [
-    [sg.Column(access_web_page_layout, element_justification='c')],
-    [sg.Column(download_tenders_layout, element_justification='c')],
+    [sg.Text('Downloading Tenders', font=title_font, justification='center', size=(30, 1), text_color=text_color)],
+    [sg.Text('Client Selection', font=subtitle_font, pad=((0, 10), (20, 5)), text_color=text_color)],
+    [sg.Text('Search with checkboxes', text_color=text_color), sg.Button('Search', key="-SEARCH WITH CHECKBOXES-", size=(15, 1))],
+    [sg.Text('Search with organization name', text_color=text_color), sg.Button("Search", key="-SEARCH-", size=(30, 1))],
+    [sg.InputText(key="-SEARCHED EXPRESSION-", size=(30, 1))],
+    [sg.Text('Display currently selected clients', text_color=text_color), sg.Button('Display current selected clients', key="-DISPLAY CURRENT CLIENTS SELECTION-", size=(30, 1))],
+    [sg.Text('Research Parameters', font=subtitle_font, pad=((0, 20), (20, 5)), text_color=text_color)],
+    [sg.Text('Oldest Date', size=(15, 1), text_color=text_color), sg.InputText(key="-OLDEST_DATE-", size=(30, 1))],
+    [sg.Text('Key Words', size=(15, 1), text_color=text_color), sg.InputText(key="-KEY WORDS-", size=(30, 1))],
+    [sg.Text('Download', font=subtitle_font, pad=((0, 20), (20, 5)), text_color=text_color)],
+    [sg.Button('Download', key="-DOWNLOAD-", size=(15, 1))]
 ]
 
-window = sg.Window('Application Name', layout, size=(600, 600))
-
-page_open = False
-
+window = sg.Window('Main Window', layout, background_color=background_color)
+selected_clients = {}
 while True:
     event, values = window.read()
-    ministry = values['ministry']
-    organisation = values['organization']
-    first_page = int(values['first_page'])
-    last_page = int(values['last_page'])
-    oldest_date = values['oldest_date']
-    key_word_list = parse_key_word_input(values["key_word_list"])
-    
-    driver = get_driver()
-
     if event == sg.WIN_CLOSED:
         break
+    elif event == "-SEARCH WITH CHECKBOXES-":
+        ministry_window = set_ministry_window(clients_database)
+        #add newly selected clients from ministry window, to previously selected clients 
+        selected_clients = run_ministry_window(ministry_window, clients_database, selected_clients)
+        print(selected_clients)
+    elif event == "-SEARCH-":
+        searched_expression = values["-SEARCHED EXPRESSION-"]
+        search_result_window = set_search_result_window(searched_expression, clients_database, selected_clients)
+        selected_clients = run_search_result_window(search_result_window, clients_database, selected_clients)
+        print(selected_clients)
+    elif event == "-DISPLAY CURRENT CLIENTS SELECTION-":
+        selection_window = set_display_selection_window(selected_clients)
+        run_display_selection_window(selection_window)
+    elif event == "-DOWNLOAD-":
 
-    if event == 'Access':
-        window['status'].update('Access in progress...', text_color='black')
+        #set download function
+        oldest_date = values["-OLDEST_DATE-"]
+        key_word_list = values["-KEY WORDS-"]
+        if oldest_date == None:
+            oldest_date = "01-01-2000"
+        if key_word_list == None:
+            key_word_list = []
+        print(oldest_date, key_word_list)
+        root = r"C:\Waves Electronics 2023-2024 - programming\Quotations\Srapping tenders\New app"
+        download_dir = "C:/Users/arthu/Downloads"
+        driver = get_driver()
+        print("selected clients", selected_clients)
+        download_multiple_pdf(driver, clients = selected_clients, oldest_date=oldest_date, key_words_list=key_word_list, authorized_approx=2, networkQualitySleepingTime=3, \
+                              root = root, download_directory=download_dir)
+        today_date = datetime.now().strftime("%d-%m-%Y")
+        download_file_path = generate_download_gem_path_from_date(today_date, root)
+        #set_results_window(download_file_path)
+        #run_results_window()
 
-        try:
-            charging_web_page(driver, "ministry", [ministry, organisation])
-            window['status'].update('Execution successful!', text_color='black')
-        except Exception as e:
-            print(f"An error occurred: {e}")
-            window['status'].update('An error occurred', text_color='red')
+        #TODO set final window
+
+        #set final window 
+
+
+
+
     
-    if event == 'Download':
-        # Call download_pdf function with parameters from input fields
 
-
-        try:
-            window['status'].update("Download in process...", text_color='black')
-            downloads_pdf(driver, "ministry", [ministry, organisation], oldest_date, first_page, last_page, key_word_list)  # Assuming download_pdf takes these parameters
-            window['status'].update('PDF Downloaded!', text_color='black')
-        except Exception as e:
-            print(f"An error occurred while downloading PDF: {e}")
-            window['status'].update('Error downloading PDF', text_color='red')
-
-
-    if event == 'Close':
-        page_open = False
-        window.hide()
-
-    window.finalize()
-
-    if not page_open:
-        break
 
 window.close()
+
+
