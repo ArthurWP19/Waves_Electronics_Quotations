@@ -113,9 +113,7 @@ def database_report(df):
     print(f"In this database, {n_clients} clients  were looked up in {n_ministry} ministry")
     print(f"There were {n_errors} errors, for clients in ministry {errors.keys()}")
     print(f"{len(df)} tenders were looked up")
-    return f"In this database, {n_clients} clients  were looked up in {n_ministry} ministry: {clients.keys()}", f"There were {n_errors}, for clients in ministry {errors.keys()}", \
-    f"{len(df)} tenders were looked up"
-
+    return [n_clients, n_ministry, n_errors, len(df)]
 def count_clients(dict_clients):
 
     n_clients = 0

@@ -2,6 +2,7 @@ import PySimpleGUI as sg
 from Functions_clients_database import read_clients_name
 from Functions_web_page import download_multiple_pdf, get_driver
 from Functions_interface import set_departments_window, set_ministry_window, run_ministry_window, set_display_selection_window, run_display_selection_window, run_search_result_window, set_search_result_window
+from Functions_interface import set_download_results_window, run_download_results_window
 sg.theme('LightGrey1')  # Theme selection
 from datetime import datetime
 from Tenders_database_analysis_functions import generate_download_gem_path_from_date
@@ -24,7 +25,7 @@ layout = [
     [sg.Text('Display currently selected clients', text_color=text_color), sg.Button('Display current selected clients', key="-DISPLAY CURRENT CLIENTS SELECTION-", size=(30, 1))],
     [sg.Text('Research Parameters', font=subtitle_font, pad=((0, 20), (20, 5)), text_color=text_color)],
     
-    [sg.Text('Key Words', size=(15, 1), text_color=text_color), sg.InputText(key="-KEY WORDS-", size=(30, 1))],
+    [sg.Text('Key Words', size=(15, 1), text_color=text_color), sg.InputText(key="-KEY WORDS-", size=(50,60), expand_y = True)],
     [sg.Text('Download', font=subtitle_font, pad=((0, 20), (20, 5)), text_color=text_color)],
     [sg.Button('Download', key="-DOWNLOAD-", size=(15, 1))]
 ]
@@ -72,12 +73,8 @@ while True:
                               root = root, download_directory=download_dir)
         today_date = datetime.now().strftime("%d-%m-%Y")
         download_file_path = generate_download_gem_path_from_date(today_date, root)
-        #set_results_window(download_file_path)
-        #run_results_window()
-
-        #TODO set final window
-
-        #set final window 
+        download_results_window = set_download_results_window(download_file_path)
+        run_download_results_window(download_results_window)
 
  
 window.close()

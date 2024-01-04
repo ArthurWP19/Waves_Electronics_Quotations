@@ -1,10 +1,10 @@
 import re
 import select
+from symbol import break_stmt
 import PySimpleGUI as sg
 
 sg.theme('LightGrey1')  # Theme selection
-
-
+from Tenders_database_analysis_functions import read_gem_download_file, database_report
 
 """
 TOOLS
@@ -140,9 +140,24 @@ def set_search_result_window(searched_expression, clients_database, previously_s
         return search_result_window
 
 
-def set_results_window(download_file_path):
-       layout = [[sg.Text(f"Results after downloading", font=('Helvetica', 12, 'bold'), key = "-TITLE-")]
-                        ]
+def set_download_results_window(download_file_path):
+       
+       df_downloads = read_gem_download_file(download_file_path)
+       report = database_report(df_downloads)
+       n_clients = report[0]
+       n_ministry = report[1]
+       n_errors = report[2]
+       n_tenders = report[3]
+       layout = [[sg.Text(f"Downloading finished", font=('Helvetica', 14, 'bold'), key = "-TITLE-"), sg.Text(f" WARNING: figures below include all downloads of the day", font=('Helvetica', 14, 'italic'), key = "-TITLE-")],
+                [sg.Text(f"{n_clients} clients were looked in {n_ministry} ministry ", font=('Helvetica', 12), key = "-TITLE-")],
+                [sg.Text(f"{n_tenders} tenders were looked up", font=('Helvetica', 12,), key = "-TITLE-")], 
+                [sg.Text(f"{n_errors} errors occured - see in download file", font=('Helvetica', 12), key = "-TITLE-")]
+                ]
+       download_results_window = sg.Window("Download results", layout , size=(1000, 400))
+       return download_results_window
+
+
+       
       
        
 
@@ -232,7 +247,7 @@ def run_search_result_window(search_result_window, clients_database, selected_cl
         event, values = search_result_window.read()
         if event == sg.WINDOW_CLOSED:
                 search_result_window.close()
-                break
+                return {}
         elif event == "-ORGANIZATION SELECTION CONFIRM-":
                 #read checked departments on window
                 selected_departments = []
@@ -252,11 +267,20 @@ def run_search_result_window(search_result_window, clients_database, selected_cl
                 for ministry in intermediate_selected_clients:
                        selected_clients[ministry] = intermediate_selected_clients[ministry]
                 search_result_window.close()
+                print("selected clients after checking")
                 return selected_clients
         
 
                 
-
+def run_download_results_window(download_results_window):
+       while True:
+            event, values = download_results_window.read()
+            if event == sg.WINDOW_CLOSED:
+                download_results_window.close()
+                break
+            elif event == "-EXIT-":
+                download_results_window.close()
+                break
                
               
        
