@@ -26,6 +26,7 @@ def parse_key_word_input(key_word_list):
         for word in parsed_key_word_list:
                 list_key_words.append(word)
         return list_key_words
+
 def search_function(searched_expression, clients_database):
        
        """
@@ -223,6 +224,7 @@ def run_display_selection_window(display_selection_window):
             elif event == "-EXIT-":
                 display_selection_window.close()
                 break
+        
             
 def run_search_result_window(search_result_window, clients_database, selected_clients):
        intermediate_selected_clients = {}

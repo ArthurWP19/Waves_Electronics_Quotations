@@ -306,7 +306,7 @@ def create_excel_file(root):
     else:
         print("creating excel file")
         # Write to the specified cells
-        values = ["Download date", "Ministry", "Organisation", "Bid's ID", "Item name", "Downloaded", "Key word that filtered item", "Starting_date", "End date"]
+        values = ["Download date", "Ministry", "Organisation", "Bid's ID", "Item name", "Downloaded", "Key word that filtered item", "Starting date", "End date"]
         df = pd.DataFrame(columns=values)
         # Save the Excel file
         with pd.ExcelWriter(root + download_folder_name + file_name, engine='openpyxl') as writer:
@@ -350,7 +350,7 @@ def filter_name(item_name, key_word_list = [], authorized_approx = 2):
         parsed_item_name = re.split(r'[, \t_\-&]+', item_name)
         #delete Na elements if any
         parsed_item_name = [item for item in parsed_item_name if item]
-        print("arsed_item_name", parsed_item_name)
+        print("parsed_item_name", parsed_item_name)
         for key_word in key_word_list:
             parsed_key_word = key_word.split()
             common_words = []
@@ -531,7 +531,6 @@ def downloads_pdf(driver, page_type, page_info, oldest_date = "01-01-2000", firs
                         #dictionnary: key name of file, value: [bid_name, hyperlink, item_name, key_word, starting_date, end_date]
                         file = {file_name: [name_bid, driver.find_elements(By.XPATH, f"/html/body/section[3]/div/div/div/div[{n_tender}]/div[1]/p[1]/a")[0], item_name, key_word, starting_date_tender, end_date_tender]}
                         if boolean: 
-                            print("item_name", item_name)
                             #GeM portal is having an issue : Sometimes, some tenders are put twice in the list on different pages
                             #We keep track of the bids we already downloaded in downloaded_bids, so we don't click on them again
                             print("**NAME_BID**", name_bid, downloaded_bids, "\\")

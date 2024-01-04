@@ -169,7 +169,6 @@ def complete_main_database(path_database, path_df_downloads):
     """
     df_database = read_gem_download_file(path_database)
     list_bid_names_database = df_database["Bid's ID"].tolist()
-    print(list_bid_names_database)
     df_downloads = read_gem_download_file(path_df_downloads)
     for index, row in df_downloads.iterrows():
         bid_id = row["Bid's ID"]
@@ -188,4 +187,33 @@ def complete_main_database(path_database, path_df_downloads):
     return 
             
 
-    
+def create_excel_sheet_with_all_no_downloads(path):
+    df_database = read_gem_download_file(path)
+    clients_looked_up = get_clients_looked_up(df_database)
+    print(clients_looked_up, count_clients(clients_looked_up))
+    input("press enter")
+    for index, row in df_database.iterrows():
+        client = row["Organisation"]
+        ministry = row["Ministry"]
+        if row["Downloaded"] == "Yes":
+            print(client)
+            if client in clients_looked_up[ministry]:
+                clients_looked_up[ministry].remove(client)
+                print("del")
+            else:
+                print("not del")
+            
+    print(clients_looked_up, count_clients(clients_looked_up))
+    input("press enter")
+    df_no_downloads = pd.DataFrame(columns = ["Download date", "Ministry", "Organisation", "Bid's ID", "Item name", "Downloaded", "Key word that filtered item", "Starting date", "End date"])
+    for index, row in df_database.iterrows():
+        client = row["Organisation"]
+        if client in clients_looked_up[ministry]:
+            df_no_downloads = pd.concat([df_no_downloads]).reset_index(drop=True)
+    with pd.ExcelWriter(path, engine='openpyxl', mode = 'a') as writer:
+            df_no_downloads.to_excel(writer, sheet_name='No downloads', index=False, header=True, startrow=0)
+    print("Finished")
+    return 
+
+            
+

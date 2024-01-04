@@ -2,7 +2,7 @@
 Used to call the functions 
 """
 
-from Tenders_database_analysis_functions import find_missing_clients_in_database, get_clients_errors, complete_main_database
+from Tenders_database_analysis_functions import find_missing_clients_in_database, get_clients_errors, complete_main_database, create_excel_sheet_with_all_no_downloads
 from Functions_web_page import get_driver, download_multiple_pdf, downloads_pdf
 from Functions_clients_database import read_clients_name
 def generate_bc_key_words():
@@ -25,8 +25,4 @@ def download_clients_with_errors(df, oldest_date, key_words_list):
 
 
 if __name__ == "__main__":
-    driver = get_driver()
-    ministry = "MINISTRY OF DEFENCE"
-    bc_key_words = generate_bc_key_words()
-    clients_database = read_clients_name(r"C:\Waves Electronics 2023-2024 - programming\Quotations\Srapping tenders\New app\clients_database")
-    download_multiple_pdf(driver, {ministry: clients_database[ministry][3:]}, oldest_date= "01-01-2000", key_words_list = bc_key_words)
+    create_excel_sheet_with_all_no_downloads(r"C:\Waves Electronics 2023-2024 - programming\Quotations\Srapping tenders\New app\Downloads and database\Gem_tenders_database\01-01-2024- Gem_tenders_database_clean - Copy.xlsx")       

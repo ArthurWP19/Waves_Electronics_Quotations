@@ -7,7 +7,7 @@ from datetime import datetime
 from Tenders_database_analysis_functions import generate_download_gem_path_from_date
 # Votre dictionnaire de clients
 clients_database = read_clients_name(r"C:\Waves Electronics 2023-2024 - programming\Quotations\Srapping tenders\New app\clients_database")
-
+import re 
 
 # Titre et sous-titres pour les sections
 title_font = ('Helvetica', 24, 'bold')
@@ -23,12 +23,12 @@ layout = [
     [sg.InputText(key="-SEARCHED EXPRESSION-", size=(30, 1))],
     [sg.Text('Display currently selected clients', text_color=text_color), sg.Button('Display current selected clients', key="-DISPLAY CURRENT CLIENTS SELECTION-", size=(30, 1))],
     [sg.Text('Research Parameters', font=subtitle_font, pad=((0, 20), (20, 5)), text_color=text_color)],
-    [sg.Text('Oldest Date', size=(15, 1), text_color=text_color), sg.InputText(key="-OLDEST_DATE-", size=(30, 1))],
+    
     [sg.Text('Key Words', size=(15, 1), text_color=text_color), sg.InputText(key="-KEY WORDS-", size=(30, 1))],
     [sg.Text('Download', font=subtitle_font, pad=((0, 20), (20, 5)), text_color=text_color)],
     [sg.Button('Download', key="-DOWNLOAD-", size=(15, 1))]
 ]
-
+#[sg.Text('Oldest Date', size=(15, 1), text_color=text_color), sg.InputText(key="-OLDEST_DATE-", size=(30, 1))]
 window = sg.Window('Main Window', layout, background_color=background_color)
 selected_clients = {}
 while True:
@@ -51,13 +51,19 @@ while True:
     elif event == "-DOWNLOAD-":
 
         #set download function
-        oldest_date = values["-OLDEST_DATE-"]
-        key_word_list = values["-KEY WORDS-"]
+        #oldest_date = values["-OLDEST_DATE-"]
+        oldest_date = "01-01-2000"
+        read_key_word_list = values["-KEY WORDS-"]
+        parsed_key_word_list = re.split(r'\s*,\s*', read_key_word_list)
+        key_word_list = [key_word for key_word in parsed_key_word_list]
+    
+
         if oldest_date == None:
             oldest_date = "01-01-2000"
         if key_word_list == None:
             key_word_list = []
-        print(oldest_date, key_word_list)
+
+
         root = r"C:\Waves Electronics 2023-2024 - programming\Quotations\Srapping tenders\New app"
         download_dir = "C:/Users/arthu/Downloads"
         driver = get_driver()
@@ -73,12 +79,7 @@ while True:
 
         #set final window 
 
-
-
-
-    
-
-
+ 
 window.close()
 
 
