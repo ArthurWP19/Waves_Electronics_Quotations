@@ -496,7 +496,7 @@ def downloads_pdf(driver, page_type, page_info, oldest_date = "01-01-2000", firs
         #checking is there are tenders on page. 
         if not is_tender(driver):
             print(f"No data_found for the client {page_info}")
-            new_row = [curent_time, page_info[0], page_info[1], "NO DATA FOUND ON GEM WEBSITE", None, None, None]
+            new_row = [curent_time, page_info[0], page_info[1], "NO DATA FOUND ON GEM WEBSITE", None, None, None, None, None]
             intermediate_downloads_register.loc[len(intermediate_downloads_register)] = new_row
         else:
             n_page_to_read = last_page - first_page

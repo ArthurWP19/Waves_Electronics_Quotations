@@ -25,4 +25,6 @@ def download_clients_with_errors(df, oldest_date, key_words_list):
 
 
 if __name__ == "__main__":
-    create_excel_sheet_with_all_no_downloads(r"C:\Waves Electronics 2023-2024 - programming\Quotations\Srapping tenders\New app\Downloads and database\Gem_tenders_database\01-01-2024- Gem_tenders_database_clean - Copy.xlsx")       
+    driver = get_driver()
+    downloads_pdf(driver, "ministry", ["MINISTRY OF DEFENCE", "DEFENCE INNOVATION ORGANISATION"])
+     
